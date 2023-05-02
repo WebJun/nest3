@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <title>Bootstrap 4 Website Example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <style>
+        .fakeimg {
+            height: 200px;
+            background: #aaa;
+        }
+    </style>
+    <style>
+        .table tbody tr td {
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="jumbotron text-center" style="margin-bottom:0">
+        <h1>My First Bootstrap 4 Page</h1>
+        <p>Resize this responsive page to see the effect!</p>
+    </div>
+
+    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+        <a class="navbar-brand" href="#">Navbar</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="collapsibleNavbar">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Link</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Link</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Link</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="margin-top:30px">
+        <div class="row">
+            <div class="col-sm-12">
+                <form action="/file/upload" method="POST" enctype="multipart/form-data">
+                    <input type="file" name="files" id="imgFile">
+                    <input type="file" name="files">
+                    <input type="file" name="files">
+                    <input type="file" name="files">
+                    <button type="submit" id="kkk" class="btn btn-primary">Save</button>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <textarea id="editor"></textarea>
+        </div>
+    </div>
+
+    <div class="container" style="margin-top:30px">
+        <div class="row">
+            <div class="col-sm-4">
+                <form id="users_form" method="POST" action="javascript:;">
+                    <input type="hidden" name="ids">
+                    <div class="form-group">
+                        <label for="firstName">firstName</label>
+                        <input type="text" class="form-control" name="firstName" placeholder="firstName">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">lastName</label>
+                        <input type="text" class="form-control" name="lastName" placeholder="lastName">
+                    </div>
+                    <button type="button" id="reset_btn" class="btn btn-success" style="display:none;">Cancel</button>
+                    <button type="button" id="save_btn" class="btn btn-primary">Save</button>
+                    <button type="button" id="delete_btn" class="btn btn-danger" style="display:none;">Delete</button>
+                </form>
+            </div>
+            <div class="col-sm-8" id="user_list"></div>
+        </div>
+    </div>
+
+    <div class="jumbotron text-center" style="margin-bottom:0">
+        <p>Footer</p>
+    </div>
+
+    <template id="user_template">
+        <table id="user_table" class="table">
+            <thead>
+                <tr>
+                    <td>id</td>
+                    <td>firstName</td>
+                    <td>lastName</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="ids"></td>
+                    <td class="firstName"></td>
+                    <td class="lastName"></td>
+                </tr>
+            </tbody>
+        </table>
+    </template>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.3.5/axios.min.js"></script>
+    <script src="https://cdn.ckeditor.com/4.13.0/standard/ckeditor.js"></script>
+    <script>
+        class AjaxImgUpload {
+            constructor() {
+                this.imgMaxN = 10;
+                this.imgMaxSize = 10;
+                this.allowExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                this.axios = null;
+            }
+            init() {
+                this.setAxios(axios);
+                CKEDITOR.plugins.add('ajaximage', {
+                    init: this.ajaximage
+                });
+            }
+            run(e) {
+                try {
+                    this.validate(e.target.files);
+                    this.submit(e);
+                    e.target.value = '';
+                } catch (e) {
+                    alert(e.message);
+                    e.target.value = '';
+                    return false;
+                }
+            }
+            ajaximage(editor) {
+                editor.ui.addButton('Ajaximage', {
+                    label: '이미지 업로드',
+                    command: 'OpenWindow',
+                    icon: '/static/img/ajaximage.gif'
+                });
+                const cmd = editor.addCommand('OpenWindow', {
+                    exec: () => {
+                        let e = document.getElementById('imgFile');
+                        e.click();
+                    }
+                });
+            }
+            setAxios(axios) {
+                this.axios = axios;
+            }
+            validate(files) {
+                if (files.length <= 0) {
+                    throw new Error(`이미지를 선택해주세요`);
+                }
+                if (files.length > this.imgMaxN) {
+                    throw new Error(`이미지는 한 번에 최대 ${this.imgMaxN}개까지 업로드할 수 있습니다.`);
+                }
+                for (let i = 0; i < files.length; i++) {
+                    const ext = this.getExtension(files[i].name);
+                    if (this.allowExt.indexOf(ext) === -1) {
+                        throw new Error(`허용되지 않는 확장자입니다.`);
+                    }
+                }
+                for (let i = 0; i < files.length; i++) {
+                    if (files[i].size > this.imgMaxSize * 1024 * 1024) {
+                        throw new Error(`이미지 하나의 최대 크기는 ${this.imgMaxSize}MB입니다.`);
+                    }
+                }
+            }
+            getExtension(path) {
+                let basename = path.split(/[\\/]/).pop();
+                let pos = basename.lastIndexOf('.');
+                if (basename === '' || pos < 1) {
+                    return '';
+                }
+                return basename.slice(pos + 1).toLowerCase();
+            }
+            async submit(e) {
+                let formData = new FormData(); // formData 객체를 생성한다.
+                for (let i = 0; i < e.target.files.length; i++) {
+                    formData.append('imgfile[]', e.target.files[i]);
+                }
+                const res = await this.axios.post('/file/upload', formData);
+                let img = res.data.filePath.substr(11, 100);
+                let imgData = `<p><img src="${img}"></p>`
+                let lastKey = Object.keys(CKEDITOR.instances)[0];
+                let originData = CKEDITOR.instances[lastKey].getData();
+                CKEDITOR.instances[lastKey].setData(originData + imgData);
+            }
+        }
+        const ajaxImgUpload = new AjaxImgUpload();
+        ajaxImgUpload.init();
+
+        $(document).on('change', '#imgFile', ajaxImgUpload.run.bind(ajaxImgUpload));
+        
+
+
+        CKEDITOR.replace('editor', {
+            toolbar: [{
+                    name: 'document',
+                    items: ['Source']
+                },
+                {
+                    name: 'clipboard',
+                    items: ['Undo', 'Redo']
+                },
+                {
+                    name: 'basicstyles',
+                    items: ['Bold', 'Italic', 'Underline', 'Strike']
+                },
+                {
+                    name: 'links',
+                    items: ['Link', 'Unlink']
+                },
+                {
+                    name: 'insert',
+                    items: ['Table']
+                },
+                {
+                    items: ['Ajaximage']
+                },
+                {
+                    name: 'tools',
+                    items: ['Maximize']
+                },
+            ],
+            extraPlugins: 'ajaximage',
+            extraAllowedContent: 'img[src,alt]', // setData()에 img 허용
+            resize_enabled: true, // 에디터 크기 조절 사용여부
+            enterMode: CKEDITOR.ENTER_BR, // 엔터시 <br> 
+            shiftEnterMode: CKEDITOR.ENTER_P, // 쉬프트+엔터시 <p>
+            toolbarCanCollapse: false, // 툴바 클릭시 접히는 여부
+            menu_subMenuDelay: 0, // 메뉴 클릭 할 때 딜레이 값
+            autoParagraph: false,
+            height: 400,
+        });
+        CKEDITOR.addCss('img {max-width:100%;}');
+    </script>
+    </script>
+
+    <script>
+        class UserModel {
+            async get() {
+                const res = await axios.get(`/users`);
+                return res.data.reverse();
+            }
+            async add(postData) {
+                await axios.post('/users', postData);
+            }
+            async edit(ids, postData) {
+                await axios.put(`/users/${ids}`, postData);
+            }
+            async delete(ids) {
+                await axios.delete(`/users/${ids}`);
+            }
+        }
+
+        class UserView {
+            draw(users) {
+                const tempHtml = $('#user_template').html();
+                const $table = $(tempHtml);
+                const $tr = $table.find('tbody tr').eq(0);
+                const trHtml = users.map((user) => {
+                    $tr.find('.ids').text(user.id);
+                    $tr.find('.firstName').text(user.firstName);
+                    $tr.find('.lastName').text(user.lastName);
+                    return $tr[0].outerHTML;
+                }).join('');
+                $table.find('tbody').html(trHtml);
+                $('#user_list').html($table);
+            }
+            reset() {
+                $("#users_form").find('input').val('');
+                $("#reset_btn").hide();
+                $("#delete_btn").hide();
+            }
+            editFormDraw(e) {
+                let $tr = $(e.target).parent('tr');
+                let ids = $tr.find('.ids').text();
+                let firstName = $tr.find('.firstName').text();
+                let lastName = $tr.find('.lastName').text();
+
+                $("[name='ids']").val(ids);
+                $("[name='firstName']").val(firstName);
+                $("[name='lastName']").val(lastName);
+                $("#reset_btn").show();
+                $("#delete_btn").show();
+            }
+        }
+
+        class UserController {
+            constructor() {
+                this.userModel = new UserModel();
+                this.userView = new UserView();
+            }
+            async draw() {
+                const users = await this.userModel.get();
+                this.userView.draw(users);
+            }
+            async save() {
+                const ids = $("[name='ids']").val();
+                const postData = $("#users_form").serialize();
+                if (this.getMode() === 'edit') {
+                    await this.userModel.edit(ids, postData);
+                    return;
+                }
+                await this.userModel.add(postData);
+            }
+            async saveAndDraw() {
+                await this.save();
+                await this.draw();
+                this.userView.reset();
+            }
+            async delete() {
+                const ids = $("[name='ids']").val();
+                await this.userModel.delete(ids);
+            }
+            async deleteAndDraw() {
+                await this.delete();
+                await this.draw();
+                this.userView.reset();
+            }
+            getMode() {
+                const ids = $("[name='ids']").val();
+                return ids ? 'edit' : 'add';
+            }
+            editFormDraw(e) {
+                this.userView.editFormDraw(e);
+            }
+            reset() {
+                this.userView.reset();
+            }
+        }
+
+        (async () => {
+            const userController = new UserController();
+            await userController.draw();
+
+            $(document).on('click', '#save_btn', userController.saveAndDraw.bind(userController));
+            $(document).on('click', '#user_table td', userController.editFormDraw.bind(userController));
+            $(document).on('click', '#reset_btn', userController.reset.bind(userController));
+            $(document).on('click', '#delete_btn', userController.deleteAndDraw.bind(userController));
+
+        })();
+    </script>
+
+
+
+</body>
+
+</html>

@@ -1,0 +1,25 @@
+### 
+POST http://localhost:13000/users
+content-type: application/json
+
+{
+    "firstName": "kildong",
+    "lastName": "hong"
+}
+###
+GET http://localhost:13000/users/1
+content-type: application/json
+###
+GET http://localhost:13000/users
+content-type: application/json
+### 
+PUT http://localhost:13000/users/1
+content-type: application/json
+
+{
+    "firstName": "jun",
+    "lastName": "heo"
+}
+### 
+DELETE http://localhost:13000/users/1
+content-type: application/json
