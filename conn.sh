@@ -1,1 +1,1 @@
-docker exec -it nest2-nest-1 bash
+docker exec -it nest3-nest-1 bash
